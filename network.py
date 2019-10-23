@@ -1,9 +1,11 @@
 import numpy as np
-from layer import Layer
-from cost import *
+from fnn.layer import Layer
+from cnn.convolution import Convolution
+from cnn.pooling import Pooling
+from fnn.cost import *
 
 class Network:
-    def __init__(self, input_units, cost=MSE()):
+    def __init__(self, input_units, cost='mse', activation="sigmoid", eta=0.01, init='normal', optimizer='adam'):
         '''
         Initialize network, including weights and nodes
         
@@ -14,13 +16,18 @@ class Network:
         cost            {string}:   Cost function
         '''
         
-        self.cost = cost
         self.layers = []
         self.h = np.array([input_units])
         self.W = []
         self.a = [np.zeros(input_units)]
+        if cost.lower() == 'mse':
+            self.cost = MSE()
+        self.activation = activation
+        self.eta = eta
+        self.init = init
+        self.optimizer = optimizer
         
-    def add(self, units, activation="sigmoid", init='normal'):
+    def dense(self, units, activation=None, eta=None, init=None, optimizer=None):
         '''
         Add dense layer
         
@@ -31,24 +38,38 @@ class Network:
         activation      {obj}       : Activation function used in layer
         init            {string}    : Initialization of layer
         '''
-        
+        if activation is None:
+            activation = self.activation
+        if eta is None:
+            eta = self.eta
+        if init is None:
+            init = self.init
+        if optimizer is None:
+            optimizer = self.optimizer
         self.h = np.append(self.h, units)
         self.a.append(np.zeros(units))
-        self.layers.append(Layer(self.h[-2], self.h[-1], activation))
+        self.layers.append(Layer(self.h[-2], self.h[-1], eta, activation, optimizer))
         W = self.layers[-1].initialize(init)
         self.W.append(W)
+        
+    def conv(self):
+        return None
+        
+    def pooling(self, mode='max', window=(2,2)):
+        self.layers.append(Pooling(mode, window))
             
     def predict(self, x):
         ''' Predicting output from network, given a input data set x '''
+        self.data = Pooling.pool2d(self.data, stride=1, padding=0)
         self.a[0] = np.array(x)
         for i, layer in enumerate(self.layers):
             self.a[i+1] = layer.activate(self.a[i])
         return self.a[-1]
         
-    def mse(self, t):
+    def mse(self, x, t):
         ''' Mean-square error, given targets t '''
         error = MSE()
-        return error.evaluate(self.a[-1], t)
+        return error.evaluate(x, t)
         
     def cost(self, t):
         ''' Cost error, given targets t '''
@@ -61,60 +82,24 @@ class Network:
             delta = layer.calculate_delta(dcost)
             dcost = delta.dot(self.W[i].T)[:,:-1]
             
-    def update(self, optimizer='GD', learning_rate=0.01):
+    def update(self):
         ''' Update weights '''
         for i, layer in enumerate(self.layers):
-            self.W[i] = layer.update_weights(i, learning_rate, optimizer)
+            self.W[i] = layer.update_weights(i)
             
-    def simulate(self, x, t, optimizer='GD', max_iter=100000, learning_rate=0.1):
+    def simulate(self, x, t, max_iter=1000):
         ''' Run a simulation '''
         self.predict(x)
         for i in range(max_iter):
             self.backprop(t)
-            self.update(optimizer, learning_rate)
+            self.update()
             self.predict(x)
             self.print_to_terminal(i, t)
         return self.a[-1]
         
     def print_to_terminal(self, i, t):
         print(10 * "-" + " " + str(i+1) + " " + 10 * "-")
-        print(self.mse(t))
+        print(self.mse(self.a[-1], t))
         print(25 * "-")
         print(" ")
-            
-            
-if __name__ == "__main__":
-    
-    train_d = [[1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-               [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-               [0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
-               [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-               [0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-               [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-               [0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-               [0, 0, 0, 0, 0, 1, 0, 0, 0, 0]]
-            
-    train_t = [[0, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-               [1, 1, 0, 1, 1, 1, 1, 1, 1, 1],
-               [1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
-               [1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-               [1, 1, 1, 1, 1, 1, 1, 0, 1, 1],
-               [1, 1, 1, 0, 1, 1, 1, 1, 1, 1],
-               [1, 1, 1, 1, 1, 1, 0, 1, 1, 1],
-               [1, 1, 1, 1, 1, 0, 1, 1, 1, 1]]
-               
-    test_d = [[0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-              [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]]
-              
-    test_t = [[1, 1, 1, 1, 0, 1, 1, 1, 1, 1],
-              [1, 0, 1, 1, 1, 1, 1, 1, 1, 1]]
-
-    NET = Network(input_units=len(train_d[0]))
-    NET.add(128)
-    NET.add(256, activation="relu")
-    NET.add(len(train_t[0]))
-    
-    NET.simulate(train_d, train_t)
-    #print(NET.predict(train_d))
-    #print(NET.predict(test_d))
     
