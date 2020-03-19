@@ -1,20 +1,20 @@
 import numpy as np
-from fnn.layer import Layer
-from cnn.convolution import Convolution
+from dnn.denselayer import DenseLayer
+from cnn.convolution import ConvLayer
 from cnn.pooling import Pooling
-from fnn.cost import *
 
 class Network:
     def __init__(self, input_units, cost='mse', activation="sigmoid", eta=0.01, init='normal', optimizer='adam'):
-        '''
-        Initialize network, including weights and nodes
+        """Initialize network, including weights and nodes
         
-        Arguments:
-        ---------
+        Parameters
+        ----------
         
-        input_units     {int}   :   Number of input units
-        cost            {string}:   Cost function
-        '''
+        input_units : int
+            Number of input units
+        cost : string   
+            Cost function
+        """
         
         self.layers = []
         self.h = np.array([input_units])
@@ -48,11 +48,11 @@ class Network:
             optimizer = self.optimizer
         self.h = np.append(self.h, units)
         self.a.append(np.zeros(units))
-        self.layers.append(Layer(self.h[-2], self.h[-1], eta, activation, optimizer))
+        self.layers.append(DenseLayer(self.h[-2], self.h[-1], eta, activation, optimizer))
         W = self.layers[-1].initialize(init)
         self.W.append(W)
         
-    def conv(self):
+    def conv(self, ):
         return None
         
     def pooling(self, mode='max', window=(2,2)):
@@ -60,7 +60,7 @@ class Network:
             
     def predict(self, x):
         ''' Predicting output from network, given a input data set x '''
-        self.data = Pooling.pool2d(self.data, stride=1, padding=0)
+        #self.data = Pooling.pool2d(self.data, stride=1, padding=0)
         self.a[0] = np.array(x)
         for i, layer in enumerate(self.layers):
             self.a[i+1] = layer.activate(self.a[i])
@@ -102,4 +102,10 @@ class Network:
         print(self.mse(self.a[-1], t))
         print(25 * "-")
         print(" ")
+        
+        
+if __name__ == "__main__":
+    from activation import GradientDescent, ADAM
+    from cost import MSE
+    
     

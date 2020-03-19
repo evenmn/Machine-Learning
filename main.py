@@ -38,6 +38,7 @@ test_t = np.exp(test_d)
 
 # Define neural network
 NET = Network(input_units=len(train_d[0]), cost='mse')
+NET.dense(256, activation='relu', eta=0.2, optimizer='adam', init='normal')
 NET.dense(512, activation='leakyrelu', eta=0.2, optimizer='adam', init='normal')
 NET.dense(len(train_t[0]), activation='sigmoid', eta=0.1, optimizer='gd', init='uniform')
 
@@ -46,3 +47,7 @@ NET.simulate(train_d, train_t, max_iter=3000)
 print(NET.predict(train_d))
 x = NET.predict(test_d)
 print(NET.mse(x, test_d))
+
+import matplotlib.pyplot as plt
+plt.plot(test_d, test_t)
+plt.show()
