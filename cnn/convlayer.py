@@ -1,23 +1,40 @@
 import numpy as np
-from ..layer import Layer
-from tools import pad, stride
+from layer import Layer
+from cnn.tools import pad, stride
 
 class ConvLayer(Layer):
-    def __init__(self, kernel=(3,32,32), pad_size=(15,15), stride=(1,1), eta=0.01, activation='relu', optimizer='adam'):
+    """Convolutional layer
+        
+    Parameters
+    ----------
+    
+    kernel : 3dtuple of ints
+        kernel size in vertical and horizontal direction
+    pad_size : 2dtuple of ints
+        zero padding in horizontal and vertical direction
+    stride : 2dtuple of ints
+        stride in horizontal and vertical direction 
+    eta : float
+        learning rate
+    init : obj
+        how to initialize weights. Methods are found in initialize.py
+    activation : obj
+        activation function. Functions are found in activation.py
+    optimizer : obj
+        optimizer function. Methods are found in optimizer.py
+    bias : bool
+        bias on (True) / off (False)
+    """
+    def __init__(self, kernel, pad_size, stride, eta, init, activation, optimizer, bias):
         self.kernel = kernel
         self.pad_size = pad_size
         self.stride = stride
         self.eta = eta
         self.activation = activation
         self.optimizer = optimizer
-        
-    def initialize(self, init):
-        '''
-        filter size is supposed to be given as a 2D tuple
-        ex. (5, 5)
-        '''
-        self.weight = np.random.random((1) + self.kernel)/sum(self.kernel)
-        self.bias = np.random.random(self.kernel[0])/sum(self.kernel[0])
+        self.weight = init(size=(1) + self.kernel)
+        if bias:
+            self.bias = init(self.kernel[0])
         
     def forward(self, input_layer):
         """
@@ -28,7 +45,7 @@ class ConvLayer(Layer):
         spans all C_i channels and has height H_w and width W_w.
 
         Args:
-            input_alyer: The input layer with shape (batch_size, channels_x, height_x, width_x)
+            input_layer: The input layer with shape (batch_size, channels_x, height_x, width_x)
             weight: Filter kernels with shape (num_filters, channels_x, height_w, width_w)
             bias: Biases of shape (num_filters)
 

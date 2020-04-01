@@ -1,5 +1,5 @@
 import numpy as np
-from ..layer import Layer
+from layer import Layer
 
 class Pooling(Layer):
     """Perform pooling on some image. 
@@ -17,14 +17,11 @@ class Pooling(Layer):
         mode of pooling. Max pooling ('max'), min pooling
         ('min') and mean pooling ('mean'/'avg') implemented
     """
-    def __init__(self, kernel=(2,2), pad_size=(0,0), stride=None, mode='max'):
+    def __init__(self, kernel, pad_size, stride, mode):
         self.kernel = kernel
         self.pad_size = pad_size
         self.stride = stride
         self.mode = mode
-
-    def initialize(self, init):
-        pass
         
     @staticmethod
     def get_mode(strided_image, mode):

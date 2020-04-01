@@ -4,9 +4,6 @@ class Layer:
     
     def __init__(self, h_0, h_1, eta, activation, optimizer):
         pass
-    
-    def initialize(self, init):
-        pass
         
     def __call__(self, input_layer):
         pass
@@ -14,7 +11,7 @@ class Layer:
     def get_gradients(self):
         pass
         
-    def update_parameters(self):
+    def update_weights(self, i):
         pass
         
 class Flatten(Layer):
@@ -24,14 +21,11 @@ class Flatten(Layer):
     def __init__(self):
         pass
         
-    def initialize(self, init):
-        pass
-        
     def __call__(self, input_layer):
         return input_layer.flatten
         
     def get_gradients(self):
         pass
         
-    def update_parameters(self):
+    def update_weights(self, i):
         pass
