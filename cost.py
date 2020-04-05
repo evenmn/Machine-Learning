@@ -5,15 +5,17 @@ class Cost:
         pass
         
     def __call__(self, outputs, targets):
-        raise NotImplementedError("Class {} has no instance '__call__'.".format(self.__class__.__name__))
+        raise NotImplementedError("Class {} has no instance '__call__'."
+                                  .format(self.__class__.__name__))
         
     def derivate(self):
-        raise NotImplementedError("Class {} has no instance 'derivate'.".format(self.__class__.__name__))
+        raise NotImplementedError("Class {} has no instance 'derivate'."
+                                  .format(self.__class__.__name__))
         
 class MSE(Cost):
     def __call__(self, outputs, targets):
         self.diff = outputs - targets
-        return 0.5 * np.diag(diff.dot(diff.T))
+        return 0.5 * np.diag(self.diff.dot(self.diff.T))
         
     def derivate(self):
         return self.diff

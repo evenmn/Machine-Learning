@@ -14,8 +14,6 @@ class ConvLayer(Layer):
         zero padding in horizontal and vertical direction
     stride : 2dtuple of ints
         stride in horizontal and vertical direction 
-    eta : float
-        learning rate
     init : obj
         how to initialize weights. Methods are found in initialize.py
     activation : obj
@@ -25,11 +23,10 @@ class ConvLayer(Layer):
     bias : bool
         bias on (True) / off (False)
     """
-    def __init__(self, kernel, pad_size, stride, eta, init, activation, optimizer, bias):
+    def __init__(self, kernel, pad_size, stride, init, activation, optimizer, bias):
         self.kernel = kernel
         self.pad_size = pad_size
         self.stride = stride
-        self.eta = eta
         self.activation = activation
         self.optimizer = optimizer
         self.weight = init(size=(1) + self.kernel)

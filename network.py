@@ -34,7 +34,6 @@ class Network:
     from initialize import Normal
     
     def __init__(self, input_shape, 
-                       eta=0.01, 
                        init=Normal(), 
                        cost=MSE(), 
                        activation=Sigmoid(), 
@@ -45,7 +44,6 @@ class Network:
         self.h = np.array([input_shape])
         self.weight = []
         self.a = [np.zeros(input_shape)]
-        self.eta = eta
         self.activation = activation
         self.init = init
         self.optimizer = optimizer
@@ -53,7 +51,6 @@ class Network:
         self.bias = bias
         
     def dense(self, units, 
-                    eta=None,
                     init=None, 
                     activation=None,  
                     optimizer=None,
@@ -76,8 +73,6 @@ class Network:
         bias : bool
             bias on (True) / off (False)
         """
-        if eta is None:
-            eta = self.eta
         if init is None:
             init = self.init
         if activation is None:
@@ -90,14 +85,13 @@ class Network:
         self.a.append(np.zeros(units))
         
         from dnn.denselayer import DenseLayer
-        layer = DenseLayer(self.h[-2], self.h[-1], eta, init, activation, optimizer, bias)
+        layer = DenseLayer(self.h[-2], self.h[-1], init, activation, optimizer, bias)
         self.layers.append(layer)
         self.weight.append(layer.weight)
         
     def conv(self, kernel=(3,32,32), 
                    pad_size=(15,15), 
                    stride=(1,1), 
-                   eta=None, 
                    init=None,
                    activation=None, 
                    optimizer=None,
@@ -124,8 +118,6 @@ class Network:
         bias : bool
             bias on (True) / off (False)
         """
-        if eta is None:
-            eta = self.eta
         if init is None:
             init = self.init
         if activation is None:
@@ -136,7 +128,7 @@ class Network:
             bias = self.bias
             
         from cnn.convlayer import ConvLayer
-        layer = ConvLayer(kernel, pad_size, stride, eta, init, activation, optimizer, bias)
+        layer = ConvLayer(kernel, pad_size, stride, init, activation, optimizer, bias)
         self.layers.append(layer)
         self.weight.append(layer.weight)
         
@@ -189,7 +181,7 @@ class Network:
         error = MSE()
         return error(input_data, targets)
         
-    def cost(self, targets):
+    def cost_value(self, targets):
         """ Cost error, given targets 
         
         Parameters
@@ -200,7 +192,7 @@ class Network:
         """
         return self.cost(self.a[-1], targets)
         
-    def backprop(self, targets):
+    def backprop(self, outputs, targets):
         """ Back-propagation processing based on some targets
         
         Parameters
@@ -209,10 +201,10 @@ class Network:
             number of targets need to match number of inputs
             size of target needs to match last layer of model
         """
-        dcost = self.cost.derivate(self.a[-1], t)
+        dcost = self.cost.derivate()
         for i, layer in reversed(list(enumerate(self.layers))):
-            delta = layer.calculate_delta(dcost)
-            dcost = delta.dot(self.W[i].T)[:,:-1]
+            dcost = layer.backward(dcost)
+            #dcost = delta.dot(self.W[i].T)[:,:-1]
             
     def update(self):
         """ Update weights.
@@ -233,27 +225,28 @@ class Network:
         max_iter : int
             max number of training interations
         """
-        for i in range(max_iter):
-            self.__call__(input_data)
-            self.backprop(targets)
+        for step in range(max_iter):
+            outputs = self(input_data)
+            cost = self.cost_value(targets)
+            self.backprop(outputs, targets)
             self.update()
-            self.print_to_terminal(i, t)
+            self.print_to_terminal(step, targets)
         return self.a[-1]
         
-    def print_to_terminal(self, i, targets):
+    def print_to_terminal(self, step, targets):
         """ Print information to terminal.
         
         Parameters
         ----------
-        i : int
+        step : int
             step number
         targets : ndarray
             number of targets need to match number of inputs
             size of target needs to match last layer of model
         """
-        print(10 * "-" + " " + str(i+1) + " " + 10 * "-")
+        print(10 * "-" + "\t" + str(step+1) + "\t" + 10 * "-")
         print(self.mse(self.a[-1], targets))
-        print(25 * "-")
+        print(35 * "-")
         print(" ")
         
         
@@ -262,11 +255,17 @@ if __name__ == "__main__":
     from optimizer import ADAM, GradientDescent
     from cost import MSE
     
-    data = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    # XOR GATE
+    data = [[0, 0], [0, 1], [1, 0], [1, 1]]
+    targets = [[0], [1], [1], [0]]
     
-    model = Network((3), cost=MSE(), activation=LeakyReLU(a=0.2), optimizer=ADAM(epsilon=1e-7))
-    model.dense(units=5, Optimizer=GradientDescent(y=0.1), activation=ReLU())
-    model.dense(units=10)
-    #model(data)
+    model = Network((2), cost=MSE(), activation=LeakyReLU(a=0.2), optimizer=ADAM(eta=0.01))
+    model.dense(units=5, optimizer=GradientDescent(eta=0.01), activation=ReLU(), bias=False)
+    model.dense(units=1, bias=False)
+    model.train(data, targets, max_iter=10000)
+    print(model([0, 0]))
+    print(model([0, 1]))
+    print(model([1, 0]))
+    print(model([1, 1]))
     
     

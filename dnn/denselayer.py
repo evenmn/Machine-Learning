@@ -6,13 +6,10 @@ class DenseLayer(Layer):
     
     Parameters
     ----------
-    
-    h_0 : int
+    nodes_prev : int
         number of hidden units in previous layer
-    h_1 : int
+    nodes_curr : int
         number of hidden units in current layer
-    eta : float
-        learning rate
     init : obj
         how to initialize weights. Methods are found in initialize.py
     activation : obj
@@ -22,15 +19,13 @@ class DenseLayer(Layer):
     bias : bool
         bias on (True) / off (False)
     """
-    def __init__(self, h_0, h_1, eta, init, activation, optimizer, bias):
-        self.h_0 = h_0    
-        if bias:
-            self.h_0 += 1   # Adding bias node
-        self.h_1 = h_1
-        self.eta = eta
+    def __init__(self, nodes_prev, nodes_curr, init, activation, optimizer, bias): 
+        self.bias = bias
+        if self.bias:
+            nodes_prev += 1   # Adding bias node
+        self.weight = init(size=(nodes_prev, nodes_curr))
         self.activation = activation
         self.optimizer = optimizer
-        self.weight = init(size=(h_0, h_1))
         
     def forward(self, input_layer):
         """Forward propagation. Multiply input_layer with weight matrix. 
@@ -40,7 +35,8 @@ class DenseLayer(Layer):
         input_layer : ndarray
             Output from previous layer.
         """
-        input_layer = np.c_[input_layer, np.ones((len(input_layer),1))]       # Add bias nodes
+        if self.bias:
+            input_layer = np.c_[input_layer, np.ones((len(input_layer),1))]
         return input_layer.dot(self.weight)
         
     def __call__(self, input_layer):
@@ -53,18 +49,23 @@ class DenseLayer(Layer):
         """
         self.input_layer = input_layer
         z = self.forward(input_layer)
-        self.output_layer = self.activation.evaluate(z)
+        self.output_layer = self.activation(z)
         return self.output_layer
         
     def backward(self, dcost):
         """ Backward propagation. 
         """
-        z = self.forward(input_layer)
-        df = self.activation.evaluate(z)
-        delta = dcost * df
-        self.gradient = self.a_0.T.dot(delta)
+        df = self.activation.derivate()
+        self.delta = dcost * df
+        print(dcost.shape)
+        print(df.shape)
+        print(self.weight.shape)
+        #if self.bias:
+        dcost_new = np.einsum('ik,jk->ij',self.delta,self.weight)
+        print(dcost_new.shape)
+        return dcost_new
         
-    def update_weights(self, i):
-        self.calculate_gradient()
-        self.weight -= self.optimizer(i+1, self.gradient)
+    def update_weights(self, step):
+        gradient = self.input_layer.T.dot(self.delta)
+        self.weight -= self.optimizer(step+1, gradient)
         return self.weight
