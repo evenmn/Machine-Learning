@@ -22,7 +22,8 @@ from tensornet.cost import MSE
 from tensornet.initialize import Normal
 
 model = Network(input_shape=(1), cost=MSE(), optimizer=ADAM(eta=0.005)) 
-model.dense(units=hidden_nodes, activation=ReLU())
+model.dense(units=64, activation=ReLU())
+model.dense(units=32, activation=ReLU())
 model.dense(units=1, activation=Sigmoid())
 ```
 
