@@ -28,7 +28,7 @@ model.dense(units=1, activation=Sigmoid())
 
 After defining the training set and the targets, the network can be trained using
 ``` python
-model.train(input_data, targets, max_iter=100)
+model.train(input_data, targets, epochs=100)
 ```
 
 The model is called directly to predict outputs

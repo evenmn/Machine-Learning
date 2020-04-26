@@ -206,7 +206,7 @@ class Network:
         for i, layer in enumerate(self.layers):
             self.weight[i] = layer.update_weights(i)
             
-    def train(self, input_data, targets, max_iter=1000):
+    def train(self, input_data, targets, epochs=1000):
         """ Train the model. 
         
         Parameters
@@ -220,7 +220,7 @@ class Network:
             max number of training interations
         """
         
-        for step in range(max_iter):
+        for step in range(epochs):
             predicted = self(input_data)
             cost = self.cost(predicted, targets)
             self.backprop()

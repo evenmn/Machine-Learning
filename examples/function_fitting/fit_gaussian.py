@@ -31,7 +31,7 @@ x = np.random.normal(size=(size_data, 1))
 t = f(x)
 
 # Train model
-model.train(x, t, max_iter = epochs)
+model.train(x, t, epochs = epochs)
 
 # Plot result
 import matplotlib.pyplot as plt
