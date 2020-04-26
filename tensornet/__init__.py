@@ -220,30 +220,17 @@ class Network:
             max number of training interations
         """
         
-        for step in range(epochs):
-            predicted = self(input_data)
-            cost = self.cost(predicted, targets)
-            self.backprop()
-            self.update()
-            self.print_to_terminal(step, targets)
-        return predicted
-        
-    def print_to_terminal(self, step, targets):
-        """ Print information to terminal.
-        
-        Parameters
-        ----------
-        step : int
-            step number
-        targets : ndarray
-            number of targets need to match number of inputs
-            size of target needs to match last layer of model
-        """
-        print(10 * "-" + "\t" + str(step+1) + "\t" + 10 * "-")
-        print("Cost    : ", self.cost(self.predicted, targets).sum())
-        #print("R2-score: ", self.score(self.predicted, targets))
-        print(35 * "-")
-        print(" ")
+        from tqdm import trange
+        with trange(epochs) as epoch:
+            for step in epoch:
+                predicted = self(input_data)
+                loss = self.cost(predicted, targets).sum()
+                self.backprop()
+                self.update()
+                epoch.set_description('Training ' + '.' * (step%3+1) + \
+                                                    ' ' * (3-step%3))
+                epoch.set_postfix(loss=loss)
+        return loss
         
         
 if __name__ == "__main__":
