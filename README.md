@@ -19,7 +19,6 @@ from tensornet import Network
 from tensornet.activation import ReLU, Sigmoid
 from tensornet.optimizer import ADAM
 from tensornet.cost import MSE
-from tensornet.initialize import Normal
 
 model = Network(input_shape=(1), cost=MSE(), optimizer=ADAM(eta=0.005)) 
 model.dense(units=64, activation=ReLU())
