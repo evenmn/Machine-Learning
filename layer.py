@@ -2,8 +2,11 @@ class Layer:
     """Layer shell for all the various layers in a neural network.
     """
     
-    def __init__(self, h_0, h_1, eta, activation, optimizer):
-        pass
+    def __init__(self, init, activation, optimizer, bias):
+        self.init = init
+        self.activation = activation
+        self.optimizer = optimizer
+        self.bias = bias
         
     def __call__(self, input_layer):
         pass

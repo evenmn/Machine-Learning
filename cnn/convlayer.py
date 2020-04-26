@@ -30,8 +30,8 @@ class ConvLayer(Layer):
         self.activation = activation
         self.optimizer = optimizer
         self.weight = init(size=(1) + self.kernel)
-        if bias:
-            self.bias = init(self.kernel[0])
+        if self.bias:
+            self.bias_weight = init(self.kernel[0])
         
     def forward(self, input_layer):
         """
@@ -61,7 +61,7 @@ class ConvLayer(Layer):
         """
         
         # TODO: Make multiple filters possible
-
+        self.input_layer = input_layer
         batch_size, channels_x, height_x, width_x = input_layer.shape
         num_filters, channels_w, height_w, width_w = self.weight.shape
         
@@ -75,16 +75,26 @@ class ConvLayer(Layer):
         # Shape after stride
         strided = stride(padded, kernel = (1) + kernel, stride = (1,1) + stride)
         
-        output_layer = np.einsum('ijpqklrs,klrs->ijpq',strided,weight)
-        output_layer += np.einsum('ijpqklrs,k->ijpq',strided,bias)
+        z = np.einsum('ijpqklrs,klrs->ijpq',strided,weight)
+        if self.bias:
+            z += np.einsum('ijpqklrs,k->ijpq',strided,bias_weight)
         
-        return output_layer
+        return z
         
     def __call__(self, input_layer):
-        pass
+        """Activation of output from forward propagation. 
+        
+        Parameters
+        ----------
+        input_layer : ndarray
+            Output from previous layer.
+        """
+        z = self.forward(input_layer)
+        self.output_layer = self.activation(z)
+        return self.output_layer
 
 
-    def backward(self, output_layer_gradient, input_layer, weight, bias, pad_size=(1,1), stride=(1,1)):
+    def backward(self, output_layer_gradient):
         """
         A naive implementation of the backward pass for a convolutional layer.
 
@@ -102,8 +112,8 @@ class ConvLayer(Layer):
         """
 
         batch_size, channels_y, height_y, width_y = output_layer_gradient.shape
-        batch_size, channels_x, height_x, width_x = input_layer.shape
-        num_filters, channels_w, height_w, width_w = weight.shape
+        batch_size, channels_x, height_x, width_x = self.input_layer.shape
+        num_filters, channels_w, height_w, width_w = self.weight.shape
 
         assert num_filters == channels_y, (
             "The number of filters must be the same as the number of output layer channels")
@@ -111,18 +121,18 @@ class ConvLayer(Layer):
             "The number of filter channels be the same as the number of input layer channels")
         
         # Add padding to input layer
-        x = np.zeros((batch_size, channels_x, height_x + 2*pad_size[0], 
-                                              width_x  + 2*pad_size[1]))
-        x[:,:,pad_size[0]:height_x + pad_size[0],
-              pad_size[1]:width_x  + pad_size[1]] = input_layer
-        y = np.zeros((batch_size, channels_y, height_y + 2*pad_size[0], 
-                                              width_y  + 2*pad_size[1]))
-        y[:,:,pad_size[0]:height_y + pad_size[0],
-              pad_size[1]:width_y  + pad_size[1]] = output_layer_gradient
+        x = np.zeros((batch_size, channels_x, height_x + 2*self.pad_size[0], 
+                                              width_x  + 2*self.pad_size[1]))
+        x[:,:,self.pad_size[0]:height_x + self.pad_size[0],
+              self.pad_size[1]:width_x  + self.pad_size[1]] = self.input_layer
+        y = np.zeros((batch_size, channels_y, height_y + 2*self.pad_size[0], 
+                                              width_y  + 2*self.pad_size[1]))
+        y[:,:,self.pad_size[0]:height_y + self.pad_size[0],
+              self.pad_size[1]:width_y  + self.pad_size[1]] = output_layer_gradient
         
-        bias_gradient = np.zeros(bias.shape)
-        weight_gradient = np.zeros(weight.shape)
-        input_layer_gradient = np.zeros(input_layer.shape)
+        bias_gradient = np.zeros(self.bias_weight.shape)
+        weight_gradient = np.zeros(self.weight.shape)
+        input_layer_gradient = np.zeros(self.input_layer.shape)
         '''
         output_layer = np.empty((batch_size, num_filters, height_y, width_y))
         for p in range(0, height_x, stride):

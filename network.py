@@ -34,11 +34,14 @@ class Network:
     from initialize import Normal
     
     def __init__(self, input_shape, 
-                       init=Normal(), 
                        cost=MSE(), 
+                       init=Normal(), 
                        activation=Sigmoid(), 
-                       optimizer=ADAM(),
+                       optimizer=ADAM(eta=0.01),
                        bias=True):
+        
+        from layer import Layer
+        self.lay = Layer(init, activation, optimizer, bias)
         
         self.layers = []
         self.h = np.array([input_shape])
@@ -49,6 +52,10 @@ class Network:
         self.optimizer = optimizer
         self.cost = cost
         self.bias = bias
+        
+    def append(self, layer):
+        self.layers.append(layer)
+        self.weight.append(layer.weight)
         
     def dense(self, units, 
                     init=None, 
@@ -251,21 +258,22 @@ class Network:
         
         
 if __name__ == "__main__":
-    from activation import LeakyReLU, ReLU
+    from activation import LeakyReLU, ReLU, Sigmoid
     from optimizer import ADAM, GradientDescent
     from cost import MSE
+    from initialize import Normal
     
     # XOR GATE
     data = [[0, 0], [0, 1], [1, 0], [1, 1]]
     targets = [[0], [1], [1], [0]]
     
-    model = Network((2), cost=MSE(), activation=LeakyReLU(a=0.2), optimizer=ADAM(eta=0.01))
-    model.dense(units=5, optimizer=GradientDescent(eta=0.01), activation=ReLU(), bias=False)
-    model.dense(units=1, bias=False)
-    model.train(data, targets, max_iter=10000)
-    print(model([0, 0]))
-    print(model([0, 1]))
-    print(model([1, 0]))
-    print(model([1, 1]))
+    model = Network((2), cost=MSE(), activation=LeakyReLU(a=0.2), optimizer=ADAM(eta=0.1), bias=False) 
+    model.dense(units=5, optimizer=GradientDescent(eta=0.1), activation=ReLU())
+    model.dense(units=1)
+    model.train(data, targets, max_iter=1000)
+    #print(model([0, 0]))
+    #print(model([0, 1]))
+    #print(model([1, 0]))
+    #print(model([1, 1]))
     
     
