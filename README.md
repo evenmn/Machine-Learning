@@ -4,11 +4,11 @@ TensorNet is a machine learning package written in Python. The interface is insp
 ## Installation
 First download the contents:
 ``` bash
-$ git clone https://github.com/evenmn/machine-learning.git
+$ git clone https://github.com/evenmn/tensornet.git
 ```
 and then install tensornet:
 ``` bash
-$ cd machine-learning
+$ cd tensornet
 $ pip install .
 ```
 
