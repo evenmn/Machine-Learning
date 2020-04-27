@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='tensornet',
-      version='1.0',
+      version='1.1',
       description='MAchine learning package written in Python',
       url='http://github.com/evenmn/machine-learning',
       author='Even Marius Nordhagen',

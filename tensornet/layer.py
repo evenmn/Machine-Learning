@@ -12,13 +12,16 @@ class Layer:
         self.bias = bias
         
     def __call__(self, input_layer):
-        pass
+        raise NotImplementedError("Class {} has no instance '__call__'."
+                                  .format(self.__class__.__name__))
         
     def get_gradients(self):
-        pass
+        raise NotImplementedError("Class {} has no instance 'get_gradients'."
+                                  .format(self.__class__.__name__))
         
     def update_weights(self, i):
-        pass
+        raise NotImplementedError("Class {} has no instance 'update_weights'."
+                                  .format(self.__class__.__name__))
         
 class Flatten(Layer):
     """Layer to be used between a convolutional or pooling layer
@@ -87,15 +90,20 @@ class DenseLayer(Layer):
         self.output_layer = self.activation(z)
         return self.output_layer
         
-    def backward(self, dcost):
+    def backward(self, dcost, start, stop):
         """ Backward propagation.
         
         Parameters
         ----------
         dcost : ndarray
             derivative of cost function with respect to the activation array 
+        start : int
+            start index of batch
+        stop : int
+            final index of batch
         """
-        df = self.activation.derivate()
+        self.input_layer = self.input_layer[start:stop]
+        df = self.activation.derivate(start, stop)
         self.delta = dcost * df
         dcost_new = np.einsum('ik,jk->ij',self.delta,self.weight)
         if self.bias:
@@ -106,7 +114,7 @@ class DenseLayer(Layer):
     def update_weights(self, step):
         """ Update the weight matrix 
         """
-        gradient = np.einsum('ij,ik->jk',self.input_layer, self.delta)
+        gradient = np.einsum('ij,ik->jk', self.input_layer, self.delta)
         self.weight -= self.optimizer(step+1, gradient)
         return self.weight
 

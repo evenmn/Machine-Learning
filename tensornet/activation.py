@@ -8,7 +8,7 @@ class Activation:
         raise NotImplementedError("Class {} has no instance '__call__'."
                                   .format(self.__class__.__name__))
         
-    def derivate(self):
+    def derivate(self, start, stop):
         raise NotImplementedError("Class {} has no instance 'derivate'."
                                   .format(self.__class__.__name__))
         
@@ -20,8 +20,8 @@ class PureLinear(Activation):
         self.Z = Z
         return Z
         
-    def derivate(self):
-        return np.ones(self.Z.shape)
+    def derivate(self, start, stop):
+        return np.ones(self.Z[start:stop].shape)
         
 class Sigmoid(Activation):
     def __init__(self):
@@ -31,8 +31,9 @@ class Sigmoid(Activation):
         self.a = 1/(1 + np.exp(-Z))
         return self.a
         
-    def derivate(self):
-        return self.a * (1 - self.a)
+    def derivate(self, start, stop):
+        a = self.a[start:stop]
+        return a * (1 - a)
         
 class ReLU(Activation):
     def __init__(self):
@@ -42,8 +43,9 @@ class ReLU(Activation):
         self.Z = Z
         return np.where(Z>0, Z, 0)
         
-    def derivate(self):
-        return np.where(self.Z>0, 1, 0)
+    def derivate(self, start, stop):
+        Z = self.Z[start:stop]
+        return np.where(Z>0, 1, 0)
             
 class LeakyReLU(Activation):
     def __init__(self, a=0.1):
@@ -53,8 +55,9 @@ class LeakyReLU(Activation):
         self.Z = Z
         return np.where(Z>0, Z, self.a * abs(Z))
         
-    def derivate(self):
-        return np.where(self.Z>0, 1, self.a)
+    def derivate(self, start, stop):
+        Z = self.Z[start:stop]
+        return np.where(Z>0, 1, self.a)
             
 class ELU(Activation):
     def __init__(self):
@@ -64,8 +67,9 @@ class ELU(Activation):
         self.Z = Z
         return np.where(Z>0, Z, np.exp(Z) - 1)
             
-    def derivate(self):
-        return np.where(self.Z>0, 1, np.exp(self.Z))
+    def derivate(self, start, stop):
+        Z = self.Z[start:stop]
+        return np.where(Z>0, 1, np.exp(Z))
         
 class Softmax(Activation):
     def __init__(self, shift=False):

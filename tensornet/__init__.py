@@ -16,16 +16,20 @@ class Network:
         dimension on input. Can be 1d (works for fully connected 
         layer only), 2d (image with only 1 channel) and 3d (image
         with multiple channels)
-    eta : float
-        learning rate
     init : obj
-        how to initialize weights. Methods are found in initialize.py
+        how to initialize weights. Methods are found in initialize.py. This is 
+        global and can be overwritten by each specific layer.
     cost : obj
         cost function. Functions are found in cost.py
     activation : obj
-        activation function. Functions are found in activation.py
+        activation function. Functions are found in activation.py. This is 
+        global and can be overwritten by each specific layer.
     optimizer : obj
-        optimizer function. Methods are found in optimizer.py
+        optimizer function. Methods are found in optimizer.py. This is global 
+        and can be overwritten by each specific layer.
+    bias : boolean
+        include bias node yes / no. This is global and can be overwritten
+        by each specific layer.
     """
 
     from tensornet.cost import MSE
@@ -37,7 +41,7 @@ class Network:
                        cost=MSE(), 
                        init=Normal(), 
                        activation=Sigmoid(), 
-                       optimizer=ADAM(eta=0.01),
+                       optimizer=ADAM(lr=0.01),
                        bias=True):
         
         self.layers = []
@@ -165,7 +169,7 @@ class Network:
             input data needs to match the input shape of model
         """
         a = np.array(input_data)
-        for i, layer in enumerate(self.layers):
+        for layer in self.layers:
             a = layer(a)
         self.predicted = a
         return a
@@ -193,21 +197,26 @@ class Network:
         v = ((targets - targets.mean()) ** 2).sum()
         return 1 - u/v
         
-    def backprop(self):
+    def backprop(self, start, stop):
         """ Back-propagation processing based on some targets
         """
-        dcost = self.cost.derivate()
-        for i, layer in reversed(list(enumerate(self.layers))):
-            dcost = layer.backward(dcost)
+        dcost = self.cost.derivate()[start:stop]
+        for layer in reversed(list(self.layers)):
+            dcost = layer.backward(dcost, start, stop)
             
-    def update(self):
+    def update(self, step):
         """ Update weights.
+        
+        Parameters
+        ----------
+        step : int
+            current step
         """
         for i, layer in enumerate(self.layers):
-            self.weight[i] = layer.update_weights(i)
+            self.weight[i] = layer.update_weights(step)
             
-    def train(self, input_data, targets, epochs=1000):
-        """ Train the model. 
+    def train(self, input_data, targets, epochs=1000, mini_batches=10):
+        """ Train the model.
         
         Parameters
         ----------
@@ -218,18 +227,30 @@ class Network:
             size of target needs to match last layer of model
         max_iter : int
             max number of training interations
+        mini_batches : int
+            number of mini batches
         """
         
+        samples = len(input_data)
+        samples_per_batch = int(samples/mini_batches)
+        
         from tqdm import trange
-        with trange(epochs) as epoch:
+        with trange(epochs, unit=' epochs') as epoch:
             for step in epoch:
-                predicted = self(input_data)
-                loss = self.cost(predicted, targets).sum()
-                self.backprop()
-                self.update()
-                epoch.set_description('Training ' + '.' * (step%3+1) + \
-                                                    ' ' * (3-step%3))
-                epoch.set_postfix(loss=loss)
+                start = 0
+                for batch in range(mini_batches):
+                    # Forward
+                    predicted = self(input_data)
+                    loss = self.cost(predicted, targets).sum()
+                    
+                    # Backward
+                    stop = start + samples_per_batch
+                    self.backprop(start, stop)
+                    self.update(batch*(1+step))
+                    epoch.set_description('Training ' + '.' * (step%4) + \
+                                                        ' ' * (4-step%4))
+                    epoch.set_postfix(loss=loss)
+                    start = stop
         return loss
         
         
