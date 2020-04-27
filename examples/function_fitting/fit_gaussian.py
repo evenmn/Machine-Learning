@@ -12,9 +12,9 @@ from tensornet.initialize import Normal
 # Adjustable parameters
 hidden_nodes = 25      # Number of hidden nodes
 size_data = 500        # Size of training data
-epochs = 100           # Number of epochs
+epochs = 10            # Number of epochs
 learning_rate = 0.005
-mini_batches = 100
+mini_batches = 10
 
 
 
