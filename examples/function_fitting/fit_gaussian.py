@@ -10,14 +10,20 @@ from tensornet.cost import MSE
 from tensornet.initialize import Normal
 
 # Adjustable parameters
-hidden_nodes = 25       # Number of hidden nodes
+hidden_nodes = 25      # Number of hidden nodes
 size_data = 500        # Size of training data
-epochs = 200           # Number of epochs
+epochs = 100           # Number of epochs
+learning_rate = 0.005
+mini_batches = 100
+
+
 
 # Set up model
-model = Network(input_shape=(1), cost=MSE(), optimizer=ADAM(eta=0.005)) 
+model = Network(input_shape=(1), cost=MSE(), optimizer=ADAM(lr=learning_rate)) 
 model.dense(units=hidden_nodes, activation=ReLU())
 model.dense(units=1, activation=Sigmoid())
+
+
 
 # Define training data
 import numpy as np
@@ -26,12 +32,15 @@ def f(coordinates):
     """
     return np.exp(-(coordinates**2).sum(axis=1)/2)
     
-    
 x = np.random.normal(size=(size_data, 1))
 t = f(x)
 
+
+
 # Train model
-model.train(x, t, epochs = epochs)
+model.train(x, t, epochs = epochs, mini_batches = mini_batches)
+
+
 
 # Plot result
 import matplotlib.pyplot as plt
