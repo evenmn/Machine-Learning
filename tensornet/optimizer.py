@@ -1,17 +1,19 @@
 import numpy as np
 
 class Optimizer:
-    def __init__(self):
-        raise NotImplementedError("Class {} has no instance '__init__'."
-                                  .format(self.__class__.__name__))
-        
+    def __init__(self, lr=0.01):
+        """Optimizer base class.
+        """
+        self.lr = lr
+        pass
+
     def __call__(self, step, gradient):
         raise NotImplementedError("Class {} has no instance '__call__'."
                                   .format(self.__class__.__name__))
-        
+
 class SGD(Optimizer):
     """ Stochastic gradient descent optimizer.
-    
+
     Parameters
     ----------
     lr : float
@@ -22,17 +24,17 @@ class SGD(Optimizer):
         decay rate
     """
 
-    def __init__(self, lr=0.01, y=0.0, lamb=0.0):
-        self.lr = lr
+    def __init__(self, y=0.0, lamb=0.0, **kwargs):
+        super().__init__(**kwargs)
         self.y = y
         self.lamb = lamb
-        
+
     def __call__(self, step, gradient):
         """ Update weights.
-        
+
         Parameters
         ----------
-        
+
         step : int
             current step
         gradient : ndarray
@@ -41,10 +43,10 @@ class SGD(Optimizer):
         m = np.zeros(gradient.shape)        # momentum
         m = self.y * m + self.lr * gradient
         return m / step**self.lamb
-        
+
 class ADAM(Optimizer):
     """ ADAM optimizer.
-    
+
     Parameters
     ----------
     lr : float
@@ -57,18 +59,18 @@ class ADAM(Optimizer):
         factor to avoid zero division. Usually ~1e-8
     """
 
-    def __init__(self, lr=0.01, y1=0.01, y2=0.001, epsilon=1e-8):
-        self.lr = lr
+    def __init__(self, y1=0.01, y2=0.001, epsilon=1e-8, **kwargs):
+        super().__init__(**kwargs)
         self.y1 = y1
         self.y2 = y2
         self.epsilon = epsilon
-        
+
     def __call__(self, step, gradient):
         """ Update weights.
-        
+
         Parameters
         ----------
-        
+
         step : int
             current step
         gradient : ndarray
